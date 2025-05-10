@@ -1,1 +1,1 @@
-# Ekspor_Minerala_AnalisisBigData_Team12
+# Ekspor_Mineral_AnalisisBigData_Team12
