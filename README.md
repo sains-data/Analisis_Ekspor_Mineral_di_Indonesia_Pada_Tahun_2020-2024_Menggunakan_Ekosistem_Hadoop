@@ -1,33 +1,80 @@
-# Analisis Ekspor Mineral Indonesia - Big Data Stack
-
-## 🎯 Gambaran Proyek
+# 📦 Analisis Ekspor Mineral Indonesia (2020–2024) - Big Data Stack
 
 Proyek ini mengimplementasikan **arsitektur medallion** (bronze, silver, gold) untuk menganalisis data ekspor mineral Indonesia menggunakan ekosistem big data terdistribusi. Sistem ini memproses **1M+ catatan ekspor mineral** dengan Hadoop, Spark, Hive, dan HBase dalam lingkungan yang sepenuhnya terkontainerisasi.
 
-## 📊 Dataset
-- **Sumber**: Data Ekspor Mineral Indonesia (WITS)
-- **Ukuran**: 91.3MB, 1.000.000+ catatan
-- **Format**: CSV dengan nilai ekspor, kuantitas, tujuan, dan detail produk
-- **Periode Waktu**: Transaksi ekspor mineral multi-tahun
+---
 
-## 🏗️ Lapisan Arsitektur
+## 📚 Daftar Isi
+
+- [🎯 Tujuan Proyek](#-tujuan-proyek)
+- [📊 Dataset](#-dataset)
+- [🏗️ Arsitektur Sistem](#️-arsitektur-sistem)
+- [🛠️ Stack Teknologi](#️-stack-teknologi)
+- [🔁 Alur Pipeline ETL](#-alur-pipeline-etl)
+- [🚀 Panduan Memulai](#-panduan-memulai)
+- [🌐 Interface Web](#-interface-web)
+- [📈 Model & Analitik](#-model--analitik)
+- [📊 Visualisasi & Konsumsi Data](#-visualisasi--konsumsi-data)
+- [📁 Struktur Proyek](#-struktur-proyek)
+- [🔧 Persyaratan Sistem](#-persyaratan-sistem)
+- [📋 Skrip Tersedia](#-skrip-tersedia)
+- [🔍 Monitoring & Kesehatan](#-monitoring--kesehatan)
+- [📚 Dokumentasi](#-dokumentasi)
+- [🎯 Nilai Bisnis](#-nilai-bisnis)
+
+---
+
+## 🎯 Tujuan Proyek
+
+- Mengelola dan menganalisis data ekspor mineral Indonesia (2020–2024)
+- Membangun pipeline ETL skala besar menggunakan Apache Spark dan Hadoop
+- Mengimplementasikan arsitektur medallion untuk pemrosesan data bertingkat
+- Melatih model prediksi tren ekspor mineral menggunakan Spark MLlib
+- Menyajikan dashboard interaktif dan analisis real-time
+- Mendukung stakeholder seperti analis, pemerintah, dan pengembang kebijakan
+
+---
+
+## 📊 Dataset
+
+- **Sumber**: Data Ekspor Mineral Indonesia (WITS), data sintetis, dan metadata pendukung
+- **Ukuran**: 91.3MB, 1.000.000+ catatan (disintesis dari 107 baris asli)
+- **Format**: CSV dengan nilai ekspor, kuantitas, tujuan, dan detail produk
+- **Periode Waktu**: Transaksi ekspor mineral 2020-2024
+- **Atribut Utama**:
+  - `negara_tujuan`, `tahun`, `bulan`, `komoditas`
+  - `volume_ton`, `harga_usd_per_ton`, `total_usd`
+
+---
+
+## 🏗️ Arsitektur Sistem
+
+Menggunakan pendekatan **Medallion Architecture**:
+
+| Layer  | Format  | Tujuan | Isi |
+|--------|---------|--------|-----|
+| Bronze | CSV | Data Mentah | Data CSV asli WITS & data sintetis tanpa modifikasi |
+| Silver | Parquet | Data Bersih | Data yang dibersihkan, divalidasi, dan distandarisasi |
+| Gold   | Parquet | Analitik Bisnis | Agregasi, model output, dan dataset siap visualisasi |
 
 ### Lapisan Bronze (Data Mentah)
 - **Tujuan**: Menyimpan data CSV asli dalam bentuk mentah
-- **Penyimpanan**: HDFS (format Parquet)
+- **Penyimpanan**: HDFS (path: `/data/bronze/`)
 - **Tabel**: `bronze_mineral_exports`
 
 ### Lapisan Silver (Data Bersih)
 - **Tujuan**: Data yang dibersihkan, divalidasi, dan distandarisasi
 - **Transformasi**: Filter null, konversi unit (USD, Kg), field turunan
-- **Penyimpanan**: HDFS (format Parquet)
+- **Penyimpanan**: HDFS (path: `/data/silver/`)
 - **Tabel**: `silver_mineral_exports`
 
 ### Lapisan Gold (Analitik Bisnis)
 - **Tujuan**: Agregasi dan wawasan siap bisnis
 - **Agregasi**: Ekspor per negara, analisis produk, tren pasar
-- **Penyimpanan**: HDFS (format Parquet)
+- **Penyimpanan**: HDFS (path: `/data/gold/`)
 - **Tabel**: `gold_exports_by_country`, `gold_exports_by_product`
+
+---
 
 ## 🛠️ Stack Teknologi
 
@@ -37,6 +84,99 @@ Proyek ini mengimplementasikan **arsitektur medallion** (bronze, silver, gold) u
 - **📊 HBase**: Database NoSQL untuk aplikasi real-time
 - **🐳 Docker**: Deployment dan orkestrasi terkontainerisasi
 - **📈 Jupyter**: Analisis interaktif dan visualisasi
+- **🔄 Apache Airflow**: Orkestrasi pipeline (opsional)
+- **📊 Apache Superset**: Dashboard dan visualisasi (opsional)
+
+---
+
+## 🔁 Alur Pipeline ETL
+
+### [1] Data Sources
+```
+├── WITS (World Integrated Trade Solution)
+│   ├── Data ekspor mineral asli 2020–2024 (CSV, 107 baris → disintesis menjadi 1 juta baris)
+│   └── Metadata: kode produk, negara, deskripsi komoditas
+└── Data Sintetis
+    ├── Tambahan data hingga 1 juta record
+    ├── Dibuat melalui random sampling dari pola data asli
+    └── Atribut divariasikan: tahun, komoditas, negara tujuan
+```
+
+### [2] Raw Data Layer (Bronze – HDFS Ingestion)
+```
+├── Path: `/data/bronze/`
+├── Simpan file CSV mentah WITS & data sintesis tanpa modifikasi
+└── Hive Metastore menyimpan skema dan lokasi file
+```
+
+### [3] Initial Processing
+```
+├── Hive External Tables → Baca data mentah di `/data/bronze/`
+└── MapReduce Jobs
+    ├── Validasi format & skema (tahun, kode produk, negara, nilai, volume)
+    └── Agregasi dasar: total ekspor per tahun → output ke `/data/processing/`
+```
+
+### [4] Cleaned & Integrated Layer (Silver – Spark Processing)
+```
+├── Path: `/data/silver/`
+├── Engine: Apache Spark (PySpark)
+├── Data Cleaning:
+│   ├── Hilangkan duplikat & missing values
+│   ├── Standarisasi format tanggal (YYYY)
+│   └── Konsistensi satuan (1000 USD, Kg)
+└── Data Integration:
+    ├── Gabungkan WITS + data sintesis
+    └── Simpan sebagai Parquet untuk optimasi
+```
+
+### [5] Feature Engineering & Model Training
+```
+├── Engine: Spark MLlib
+├── Join & Transform:
+│   ├── Hitung tren pertumbuhan nilai & volume
+│   ├── Rasio nilai per volume
+│   └── Feature seasonality (year-over-year)
+├── Pelatihan Model:
+│   ├── Regresi Linear (prediksi nilai ekspor)
+│   ├── ARIMA (forecast time-series)
+│   └── Decision Tree (klasifikasi produk utama)
+└── Evaluasi & Tuning (MAE, MSE)
+```
+
+### [6] Analytics-Ready Layer (Gold – Serving)
+```
+├── Path: `/data/gold/`
+├── Simpan:
+│   ├── Dataset terintegrasi bersih (Parquet)
+│   ├── Output prediksi & agregasi per tahun/komoditas
+│   └── Model terlatih (binary Spark MLlib)
+└── Partisi berdasarkan tahun & komoditas
+```
+
+### [7] Consumption & Visualization
+```
+├── Query Engines:
+│   ├── Apache Hive → OLAP & laporan historis
+│   └── Spark SQL → Ad-hoc analysis
+└── Dashboard & Reporting:
+    ├── Grafis tren ekspor per komoditas
+    ├── Tabel top-10 negara tujuan
+    └── Prediksi nilai ekspor 2025
+```
+
+### [8] Orchestration & Monitoring
+```
+├── Apache Airflow:
+│   ├── DAG Bronze→Silver harian
+│   ├── DAG retraining model mingguan
+│   └── Alert on failure ke email/Slack
+├── Apache Ambari → Pantau HDFS, Spark, Hive
+└── Health Checks:
+    └── Validasi row-count & schema tiap layer
+```
+
+---
 
 ## 📁 Struktur Proyek
 
@@ -122,26 +262,63 @@ Gunakan skrip otomatisasi untuk membuka semua interface:
 
 ## 🔧 Persyaratan Sistem
 
+- **OS**: Windows 11 + WSL2 Ubuntu 22.04
 - **Docker & Docker Compose**: Orkestrasi container
 - **RAM**: Minimum 8GB (16GB direkomendasikan)
 - **Penyimpanan**: 10GB+ ruang tersedia
 - **Port**: 8080, 8081, 9864, 9870, 16010 (dapat dikonfigurasi)
+- **Tools**: Hadoop 3.4.1, Apache Spark, Hive, Superset, Ambari, Airflow
+
+---
 
 ## 📋 Skrip Tersedia
 
 ### Skrip Python (`scripts/python/`)
-- **mineral_export_analysis.py**: Pipeline analisis utama
-- **data_validation.py**: Pemeriksaan kualitas data
-- **export_insights.py**: Query business intelligence
+- **final_analysis.py**: Pipeline analisis utama
+- **run_medallion_analysis.py**: Eksekusi arsitektur medallion
 
 ### Otomatisasi (`automation/powershell/`)
 - **install_packages.ps1**: Instalasi dependensi
 - **open_all_interfaces.ps1**: Buka semua interface web
 - **run_analysis.ps1**: Eksekusi pipeline analisis lengkap
+- **open_web_interfaces.ps1**: Akses cepat ke dashboard
 
 ### Skrip Shell (`scripts/shell/`)
 - **setup_hdfs.sh**: Inisialisasi HDFS
-- **start_services.sh**: Otomatisasi startup layanan
+- **analyze_minerals.sh**: Analisis mineral otomatis
+- **final_verification.sh**: Verifikasi akhir sistem
+- **install_packages.sh**: Instalasi dependensi Linux
+- **run_analysis.sh**: Eksekusi analisis lengkap
+
+### Skrip Batch (`scripts/batch/`)
+- **analyze_minerals.bat**: Analisis Windows batch
+
+---
+
+## 📈 Model & Analitik
+
+| Analisis | Algoritma | Output |
+|----------|-----------|--------|
+| Prediksi volume ekspor | Linear Regression | Estimasi ekspor bulan/tahun ke depan |
+| Prediksi time-series | ARIMA | Tren ekspor komoditas tahunan |
+| Segmentasi negara | KMeans Clustering | Grup perilaku negara tujuan ekspor |
+| Feature Importance | Decision Tree | Fitur paling berpengaruh dalam ekspor |
+
+---
+
+## 📊 Visualisasi & Konsumsi Data
+
+- **Apache Superset**:
+  - Tren ekspor bulanan/tahunan
+  - Top-10 negara tujuan
+  - Perbandingan komoditas
+- **Hive SQL & Spark SQL**:
+  - Query OLAP untuk analisis interaktif
+- **Jupyter Notebooks**:
+  - Analisis eksplorasi data interaktif
+  - Visualisasi dan dashboard khusus
+
+---
 
 ## 📊 Kemampuan Analisis
 
