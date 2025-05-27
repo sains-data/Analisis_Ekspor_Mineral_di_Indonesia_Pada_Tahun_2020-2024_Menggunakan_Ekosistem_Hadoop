@@ -1,0 +1,85 @@
+version: '3.8'
+services:
+  hadoop-namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop2.7.4-java8
+    container_name: namenode
+    environment:
+      - CLUSTER_NAME=medallion-cluster
+    ports:
+      - "9870:9870"
+      - "9000:9000"
+    volumes:
+      - hadoop_namenode:/hadoop/dfs/name
+      - ./:/data
+
+  hadoop-datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop2.7.4-java8
+    container_name: datanode
+    environment:
+      - CLUSTER_NAME=medallion-cluster
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+    ports:
+      - "9864:9864"
+    volumes:
+      - hadoop_datanode:/hadoop/dfs/data
+      - ./:/data
+    depends_on:
+      - hadoop-namenode
+
+  spark-master:
+    image: bde2020/spark-master:2.4.0-hadoop2.7
+    container_name: spark-master
+    environment:
+      - INIT_DAEMON_STEP=setup_spark
+      - SPARK_MODE=master
+    ports:
+      - "7077:7077"
+      - "8080:8080"
+    volumes:
+      - ./:/data
+    depends_on:
+      - hadoop-namenode
+      - hadoop-datanode
+
+  spark-worker:
+    image: bde2020/spark-worker:2.4.0-hadoop2.7
+    container_name: spark-worker
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./:/data
+    depends_on:
+      - spark-master
+
+  hbase:
+    image: harisekhon/hbase
+    container_name: hbase
+    ports:
+      - "16010:16010"
+      - "2181:2181"
+    environment:
+      - HBASE_MANAGES_ZK=true
+    volumes:
+      - ./:/data
+    depends_on:
+      - hadoop-namenode
+      - hadoop-datanode
+
+  # Adding a Jupyter notebook for interactive analysis
+  jupyter:
+    image: jupyter/pyspark-notebook
+    container_name: jupyter
+    ports:
+      - "8888:8888"
+    environment:
+      - SPARK_OPTS="--master=spark://spark-master:7077 --driver-memory=1g --executor-memory=1g"
+    volumes:
+      - ./:/home/jovyan/work
+    depends_on:
+      - spark-master
+
+volumes:
+  hadoop_namenode:
+  hadoop_datanode:
