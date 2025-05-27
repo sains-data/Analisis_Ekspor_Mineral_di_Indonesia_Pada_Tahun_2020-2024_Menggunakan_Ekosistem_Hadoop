@@ -352,7 +352,7 @@ Sistem ini memungkinkan:
 - **Wawasan Ekonomi**: Analitik volume dan nilai perdagangan
 - **Perencanaan Strategis**: Strategi ekspor berbasis data
 
-## Anggota Kelompok
+## 👨‍🎓 Anggota Kelompok
 
 Berikut adalah daftar anggota kelompok yang terlibat dalam proyek ini:
 
