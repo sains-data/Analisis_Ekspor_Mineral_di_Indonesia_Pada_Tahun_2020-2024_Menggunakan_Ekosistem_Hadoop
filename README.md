@@ -352,6 +352,17 @@ Sistem ini memungkinkan:
 - **Wawasan Ekonomi**: Analitik volume dan nilai perdagangan
 - **Perencanaan Strategis**: Strategi ekspor berbasis data
 
+## Anggota Kelompok
+
+Berikut adalah daftar anggota kelompok yang terlibat dalam proyek ini:
+
+| No | Nama Lengkap                     | NIM         |
+|----|---------------------------------|-------------|
+| 1  | Lion Abdi Marga                 | 121450047   |
+| 2  | Jeremia Susanto                 | 122450022   |
+| 3  | Berliana Enda Putri             | 122450065   |
+| 4  | Patricia Leondrea Diajeng Putri| 122450050   |
+
 ---
 
 **Status**: ✅ **BEROPERASI PENUH** - Semua layanan berjalan, interface web dapat diakses, 1M+ catatan diproses
