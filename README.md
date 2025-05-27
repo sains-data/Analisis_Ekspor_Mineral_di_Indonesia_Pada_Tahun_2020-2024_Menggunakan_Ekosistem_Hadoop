@@ -11,7 +11,7 @@ Proyek ini mengimplementasikan **arsitektur medallion** (bronze, silver, gold) u
 - [🏗️ Arsitektur Sistem](#️-arsitektur-sistem)
 - [🛠️ Stack Teknologi](#️-stack-teknologi)
 - [🔁 Alur Pipeline ETL](#-alur-pipeline-etl)
-- [🚀 Panduan Memulai](#-panduan-memulai)
+- [🚀 Panduan Memulai](#-Ypanduan-memulai)
 - [🌐 Interface Web](#-interface-web)
 - [📈 Model & Analitik](#-model--analitik)
 - [📊 Visualisasi & Konsumsi Data](#-visualisasi--konsumsi-data)
